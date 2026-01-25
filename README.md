@@ -1,7 +1,7 @@
 EvalAI – Neural Classroom Evaluation System
 
 ![Status](https://img.shields.io/badge/Status-Hackathon_Winning_Project-success?style=for-the-badge)
-![AI](https://img.shields.io/badge/Powered_By-Google_Gemini_1.5-blue?style=for-the-badge&logo=google)
+![AI](https://img.shields.io/badge/Powered_By-Google_Gemini_2.5-blue?style=for-the-badge&logo=google)
 ![Stack](https://img.shields.io/badge/Stack-Node.js_|_Firebase_|_VanillaJS-orange?style=for-the-badge)
 ![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
 
