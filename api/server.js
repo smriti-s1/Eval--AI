@@ -20,8 +20,7 @@ if (!process.env.GEMINI_API_KEY) {
 // --- GEMINI SETUP ---
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-// ✅ FIXED: Correct Model Name (gemini-1.5-flash)
-// gemini-2.5-flash abhi exist nahi karta, isliye crash ho raha tha
+
 const model = genAI.getGenerativeModel({ 
     model: "gemini-2.5-flash", 
     generationConfig: { responseMimeType: "application/json" }
@@ -42,7 +41,6 @@ const parseAIJSON = (text) => {
 
 // ==========================================================
 // 1. PROCESS DOCS (OCR)
-// ✅ FIXED: Added '/api' prefix
 // ==========================================================
 app.post('/api/process-docs', async (req, res) => {
   const { qpList = [], ansList = [] } = req.body;
@@ -95,7 +93,6 @@ app.post('/api/process-docs', async (req, res) => {
 
 // ==========================================================
 // 2. GENERATE MODEL ANSWER
-// ✅ FIXED: Added '/api' prefix
 // ==========================================================
 app.post('/api/generate-answer', async (req, res) => {
   try {
@@ -108,7 +105,6 @@ app.post('/api/generate-answer', async (req, res) => {
 
 // ==========================================================
 // 3. BATCH EVALUATE (Teacher Note + Improvement Tip)
-// ✅ FIXED: Added '/api' prefix
 // ==========================================================
 app.post('/api/evaluate-text', async (req, res) => {
   const { question, modelAnswer, students, strictness } = req.body;
@@ -157,7 +153,7 @@ app.post('/api/evaluate-text', async (req, res) => {
   const avg = (totalScore / (results.length || 1)).toFixed(1);
   const commonMistakes = Object.keys(mistakes).slice(0,3);
   
-  // 🔥 Generate Smart Teacher Note
+  //  Generate Smart Teacher Note
   const improvementTip = commonMistakes.length > 0 
     ? `Class is struggling with: ${commonMistakes.join(", ")}. Consider revising these topics.` 
     : "Excellent performance! No major gaps found.";
@@ -173,7 +169,7 @@ app.post('/api/evaluate-text', async (req, res) => {
   });
 });
 
-// ✅ CRITICAL FIX: "require" hata diya kyunki wo ES Module me crash karta hai
-// Vercel ke liye sirf export chahiye
+
 export default app;
+
 
