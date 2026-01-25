@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>EvalAI | Smart Evaluation</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+<style>
+  /* === GLASSMORPHISM THEME (FULL) === */
+  :root { --primary: #6c63ff; --secondary: #9b5cff; --success: #22c55e; --bg-dark: #020617; --bg-glass: rgba(255, 255, 255, 0.04); --border: rgba(255, 255, 255, 0.1); --text-main: #e5e7eb; }
+  body { margin: 0; font-family: "Segoe UI", sans-serif; background: radial-gradient(circle at top right, rgba(108, 99, 255, 0.15), transparent 40%), var(--bg-dark); color: var(--text-main); padding: 60px 20px; min-height: 100vh; }
+  .container { max-width: 1000px; margin: auto; background: var(--bg-glass); backdrop-filter: blur(20px); border: 1px solid var(--border); border-radius: 28px; padding: 45px; box-shadow: 0 40px 120px rgba(0,0,0,0.6); }
+  h2 { text-align: center; font-size: 36px; margin-bottom: 20px; background: linear-gradient(to right, #ffffff, var(--primary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  #statusOverlay { text-align: center; color: var(--secondary); font-weight: 700; margin-bottom: 30px; min-height: 24px; }
+  
+  /* Upload & Inputs */
+  .upload-section { display: flex; gap: 25px; margin-bottom: 35px; }
+  .upload-box { flex: 1; border: 2px dashed var(--border); padding: 25px; border-radius: 18px; text-align: center; background: rgba(255,255,255,0.02); transition: 0.3s; }
+  .upload-box:hover { border-color: var(--primary); background: rgba(108,99,255,0.05); }
+  .file-count { margin-top: 10px; color: var(--success); font-weight: 600; font-size: 14px; }
+  
+  button { width: 100%; padding: 20px; border: none; border-radius: 16px; font-weight: 800; cursor: pointer; background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; font-size: 18px; transition: transform 0.2s; }
+  button:hover:not(:disabled) { transform: translateY(-3px); box-shadow: 0 10px 30px rgba(108,99,255,0.3); }
+  button:disabled { opacity: 0.6; cursor: not-allowed; }
+  
+  /* Student Cards */
+  .student-card { margin-top: 20px; padding: 20px; background: rgba(255,255,255,0.03); border-left: 5px solid var(--primary); border-radius: 12px; animation: slideUp 0.5s ease; }
+  .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+  .student-name { font-size: 18px; font-weight: 700; color: #fff; }
+  .student-score { font-size: 20px; font-weight: 800; color: var(--success); }
+  .feedback { color: #94a3b8; line-height: 1.5; }
+  .audio-btn { background: #4f46e5 !important; width: auto !important; padding: 8px 15px !important; font-size: 14px !important; margin-top: 10px; display: inline-flex; align-items: center; gap: 5px; cursor: pointer; border-radius: 8px; color: white; border: none; }
+  
+  /* Dashboard & Charts */
+  .insights-dashboard { display: none; margin-top: 40px; padding: 25px; background: rgba(99, 102, 241, 0.1); border: 1px solid var(--primary); border-radius: 20px; animation: fadeIn 0.5s ease; }
+  .dashboard-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 25px; }
+  .metric-card h3 { margin: 0; color: #cbd5e1; font-size: 14px; text-transform: uppercase; }
+  .metric-card .value { font-size: 32px; font-weight: 800; color: var(--success); }
+  .charts-container { display: flex; gap: 20px; height: 300px; margin-top: 20px; }
+  .chart-box { flex: 1; background: rgba(0,0,0,0.2); border-radius: 15px; padding: 10px; }
+
+  @media print {
+    body { background: white; color: black; }
+    .container { box-shadow: none; border: none; padding: 0; }
+    button, .upload-section, #statusOverlay, select { display: none !important; }
+    .student-card { border: 1px solid #000; color: black; page-break-inside: avoid; }
+  }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+</style>
+</head>
+
+<body>
+
+<div class="container">
+  <h2>EvalAI – Neural Classroom Evaluation</h2>
+  <div id="statusOverlay">System Ready. Upload papers to begin.</div>
+
+  <div class="upload-section">
+    <div class="upload-box">
+      <label style="color:var(--primary); font-weight:bold;">1. Question Paper</label><br><br>
+      <input type="file" id="qpFiles" multiple>
+      <div id="qpCount" class="file-count">0 file(s)</div>
+    </div>
+
+    <div class="upload-box">
+      <label style="color:var(--primary); font-weight:bold;">2. Student Answer Sheets</label><br><br>
+      <input type="file" id="ansFiles" multiple>
+      <div id="ansCount" class="file-count">0 page(s)</div>
+    </div>
+  </div>
+
+  <div style="margin-bottom: 25px; background: rgba(255,255,255,0.05); padding: 15px; border-radius: 15px; display: flex; align-items: center; justify-content: space-between; border: 1px solid var(--border);">
+    <label style="color:var(--primary); font-weight:bold; font-size: 16px;">⚖️ Evaluation Mode:</label>
+    <select id="strictness" style="padding:12px; border-radius:10px; border: 1px solid #6366f1; background: #0f172a; color: white; font-weight: bold; cursor: pointer; flex: 1; margin-left: 15px;">
+        <option value="Lenient">🟢 Lenient</option>
+        <option value="Moderate" selected>🟡 Moderate</option>
+        <option value="Strict">🔴 Strict</option>
+    </select>
+  </div>
+
+  <button id="processBtn">Evaluate Class with AI 🚀</button>
+
+  <div id="dashboard" class="insights-dashboard">
+    <div class="dashboard-grid">
+        <div class="metric-card"><h3>Class Average</h3><div class="value" id="avgScore">0.0</div></div>
+        <div class="metric-card"><h3>Total Students</h3><div class="value" id="totalStudents">0</div></div>
+    </div>
+    <div class="teacher-note">
+        <strong style="color: #fcd34d;">💡 Note:</strong>
+        <p id="teacherTip" style="margin: 5px 0 0 0; color: #fff;"></p>
+    </div>
+  </div>
+
+  <div id="resultArea"></div>
+  
+  <div class="btn-group">
+      <button id="downloadBtn" style="display:none; background:var(--success);">📥 Download CSV</button>
+      <button id="printBtn" style="display:none; background:#3b82f6;" onclick="window.print()">🖨️ Print Report</button>
+  </div>
+</div>
+
+<script type="module">
+import { db, auth } from "./js/firebase.js"; 
+import { collection, addDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+
+// Text to Speech Function
+window.speakText = (text) => {
+  if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+      const speech = new SpeechSynthesisUtterance(text);
+      window.speechSynthesis.speak(speech);
+  }
+};
+
+const qpInput = document.getElementById("qpFiles");
+const ansInput = document.getElementById("ansFiles");
+const processBtn = document.getElementById("processBtn");
+const statusOverlay = document.getElementById("statusOverlay");
+const resultArea = document.getElementById("resultArea");
+const dashboard = document.getElementById("dashboard");
+const downloadBtn = document.getElementById("downloadBtn");
+const printBtn = document.getElementById("printBtn");
+
+// ✅ UI FIX: Update File Counts when user selects files
+qpInput.onchange = () => { 
+    document.getElementById("qpCount").innerText = qpInput.files.length + " file(s)"; 
+};
+ansInput.onchange = () => { 
+    document.getElementById("ansCount").innerText = ansInput.files.length + " page(s)"; 
+};
+
+// ✅ CRITICAL FIX: Image Compression to prevent Payload Too Large Error
+const preprocessImage = file => new Promise(res => {
+  const r = new FileReader();
+  r.readAsDataURL(file);
+  r.onload = e => {
+    const img = new Image();
+    img.src = e.target.result;
+    img.onload = () => {
+      const c = document.createElement("canvas");
+      const x = c.getContext("2d");
+      // Resizing to 800px max
+      const s = Math.min(800/img.width, 800/img.height, 1);
+      c.width = img.width*s; c.height = img.height*s;
+      x.drawImage(img,0,0,c.width,c.height);
+      // Reducing quality to 0.4
+      res({ data: c.toDataURL("image/jpeg", 0.4).split(",")[1], type: "image/jpeg", filename: file.name });
+    };
+  };
+});
+
+processBtn.onclick = async () => {
+  if (!auth.currentUser) return alert("Please Login First!");
+  if (!qpInput.files.length || !ansInput.files.length) return alert("Upload papers!");
+
+  processBtn.disabled = true;
+  statusOverlay.innerText = "⏳ Initializing Neural Vision...";
+
+  try {
+    const qpList = await Promise.all([...qpInput.files].map(preprocessImage));
+    const ansList = await Promise.all([...ansInput.files].map(preprocessImage));
+
+    // ✅ FIXED: URLs pointing to /api/ endpoints to match Vercel structure
+    statusOverlay.innerText = "🔍 Scanning API...";
+    const scanRes = await fetch("/api/process-docs", {
+        method:"POST", headers:{ "Content-Type":"application/json" },
+        body:JSON.stringify({ qpList, ansList })
+    });
+    
+    if (!scanRes.ok) throw new Error(`OCR Error: ${scanRes.status} (Check Vercel Logs)`);
+    const scanData = await scanRes.json();
+
+    statusOverlay.innerText = "🧠 Generating Answer...";
+    const modelRes = await fetch("/api/generate-answer", {
+        method:"POST", headers:{ "Content-Type":"application/json" },
+        body:JSON.stringify({ question: scanData.questionText })
+    });
+    const modelData = await modelRes.json();
+
+    statusOverlay.innerText = "🚀 Grading Papers...";
+    const evalRes = await fetch("/api/evaluate-text", {
+        method:"POST", headers:{ "Content-Type":"application/json" },
+        body:JSON.stringify({
+            question: scanData.questionText,
+            modelAnswer: modelData.answer,
+            students: scanData.students,
+            strictness: document.getElementById("strictness").value
+        })
+    });
+    
+    if (!evalRes.ok) throw new Error("Grading Failed. Check API Key or Timeout.");
+    const evalData = await evalRes.json();
+    
+    // Save to Firebase
+    for (const r of evalData.results) {
+        await addDoc(collection(db, "evaluations"), {
+            studentId: r.studentId, score: r.score, feedback: r.feedback,
+            date: new Date().toISOString(), teacherId: auth.currentUser.uid
+        });
+    }
+
+    statusOverlay.innerText = "✅ Evaluation Complete!";
+    dashboard.style.display = "block";
+    confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
+
+    document.getElementById("avgScore").innerText = evalData.teacherInsights.classAverage;
+    document.getElementById("totalStudents").innerText = evalData.teacherInsights.totalStudents;
+    document.getElementById("teacherTip").innerText = evalData.teacherInsights.improvementTip;
+
+    // Clear previous results
+    resultArea.innerHTML = "";
+    
+    // Render new results
+    evalData.results.forEach(student => {
+        resultArea.innerHTML += `
+            <div class="student-card">
+                <div class="card-header">
+                    <span class="student-name">👤 Roll No: ${student.studentId.split('.')[0]}</span>
+                    <span class="student-score">${student.score}</span>
+                </div>
+                <div class="feedback"><strong>Feedback:</strong> ${student.feedback}</div>
+                <button onclick="speakText('${student.feedback.replace(/'/g, "")}')" class="audio-btn">🔊 Listen</button>
+            </div>`;
+    });
+
+    downloadBtn.style.display = "block";
+    printBtn.style.display = "block";
+
+  } catch (e) {
+    console.error(e);
+    statusOverlay.innerText = "❌ Fatal Error: " + e.message;
+    alert("Error: " + e.message);
+  }
+  processBtn.disabled = false;
+};
+</script>
+</body>
+</html>

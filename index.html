@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EvalAI | Next-Gen Evaluation</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<div class="login-wrapper">
+  <div class="grid-background">
+    <div class="grid-lines"></div>
+    <div class="floating-orbs">
+      <div class="orb"></div>
+      <div class="orb orb-2"></div>
+    </div>
+  </div>
+
+  <div class="intro-section">
+    <div class="intro-content">
+      <div class="logo-container">
+        <h1 class="logo-text">Eval<span>AI</span></h1>
+      </div>
+      <p class="tagline">The Future of Academic Evaluation</p>
+      
+      <div class="feature-stack-3d">
+        <div class="f-card">
+          <div class="f-icon">✦</div>
+          <div class="f-info">
+            <h4>Handwriting Transcription</h4>
+            <p>Automated conversion of handwritten scripts into digital text.</p>
+          </div>
+        </div>
+        <div class="f-card">
+          <div class="f-icon">✦</div>
+          <div class="f-info">
+            <h4>Context-Aware Grading</h4>
+            <p>Intelligent system that understands student context and intent.</p>
+          </div>
+        </div>
+        <div class="f-card">
+          <div class="f-icon">✦</div>
+          <div class="f-info">
+            <h4>Real-time Analytics</h4>
+            <p>Deep insights into student progress and performance trends.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="login-section">
+    <div class="obsidian-auth-card">
+      <div class="auth-header">
+        <h2>Secure Login</h2>
+        <p>Initialize your evaluation session</p>
+      </div>
+
+      <form id="loginForm">
+        <div class="input-wrap">
+          <label>ID / EMAIL</label>
+          <input type="email" id="email" placeholder="name@school.com" required>
+        </div>
+
+        <div class="input-wrap">
+          <label>ACCESS KEY</label>
+          <input type="password" id="password" placeholder="••••••••" required>
+        </div>
+
+        <button type="submit" id="loginBtn">
+          <span>Enter Cockpit</span>
+        </button>
+      </form>
+      
+      <p id="error-message"></p>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+    import { auth } from "./js/firebase.js";
+    import { login } from "./js/auth.js";
+
+    const loginForm = document.getElementById("loginForm");
+    const loginBtn = document.getElementById("loginBtn");
+    const errorMessage = document.getElementById("error-message");
+
+    loginForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const email = document.getElementById("email").value;
+        const password = document.getElementById("password").value;
+        errorMessage.textContent = "";
+
+        try {
+            loginBtn.style.opacity = "0.7";
+            loginBtn.querySelector('span').innerText = "Authenticating...";
+            await login(email, password);
+            window.location.href = "dashboard.html";
+        } catch (error) {
+            loginBtn.style.opacity = "1";
+            loginBtn.querySelector('span').innerText = "Enter Cockpit";
+            errorMessage.textContent = "Invalid Credentials";
+        }
+    });
+</script>
+</body>
+</html>
