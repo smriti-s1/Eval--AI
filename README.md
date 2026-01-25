@@ -3,7 +3,7 @@ EvalAI – Neural Classroom Evaluation System
 ![Status](https://img.shields.io/badge/Status-Hackathon_Winning_Project-success?style=for-the-badge)
 ![AI](https://img.shields.io/badge/Powered_By-Google_Gemini_2.5-blue?style=for-the-badge&logo=google)
 ![Stack](https://img.shields.io/badge/Stack-Node.js_|_Firebase_|_VanillaJS-orange?style=for-the-badge)
-![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
+
 
 > **EvalAI** is an AI-powered grading assistant designed to liberate teachers from the burden of manual evaluation. By leveraging **Computer Vision (OCR)** and **Generative AI**, EvalAI digitizes handwritten answer sheets, evaluates them against model answers, and provides actionable insights—saving **90% of grading time**.
 
@@ -36,7 +36,7 @@ EvalAI – Neural Classroom Evaluation System
 | :--- | :--- |
 | **Frontend** | HTML5, CSS3 (Glassmorphism), Vanilla JavaScript |
 | **Backend** | Node.js, Express.js |
-| **AI Engine** | Google Gemini API (`gemini-1.5-flash`) |
+| **AI Engine** | Google Gemini API (`gemini-2.5-flash`) |
 | **Database** | Google Firebase Firestore |
 | **Authentication** | Firebase Auth (Email/Password) |
 | **Visualization** | Chart.js, Canvas Confetti |
