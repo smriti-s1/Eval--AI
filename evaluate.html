@@ -146,7 +146,7 @@ const strictnessInput = document.getElementById("strictness");
 const qpCount = document.getElementById("qpCount");
 const ansCount = document.getElementById("ansCount");
 
-// ✅ UI FIX: Update File Counts when user selects files
+
 qpInput.onchange = () => { 
     document.getElementById("qpCount").innerText = qpInput.files.length + " file(s)"; 
 };
@@ -154,7 +154,7 @@ ansInput.onchange = () => {
     document.getElementById("ansCount").innerText = ansInput.files.length + " page(s)"; 
 };
 
-// ✅ CRITICAL FIX: Image Compression to prevent Payload Too Large Error
+
 const preprocessImage = file => new Promise(res => {
   const r = new FileReader();
   r.readAsDataURL(file);
@@ -231,7 +231,7 @@ processBtn.onclick = async () => {
     const qpList = await Promise.all([...qpInput.files].map(preprocessImage));
     const ansList = await Promise.all([...ansInput.files].map(preprocessImage));
 
-    // ✅ FIXED: URLs pointing to /api/ endpoints to match Vercel structure
+    
     statusOverlay.innerText = "🔍 Scanning API...";
     const scanRes = await fetch("/api/process-docs", {
         method:"POST", headers:{ "Content-Type":"application/json" },
