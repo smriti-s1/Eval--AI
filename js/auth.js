@@ -1,10 +1,10 @@
 // js/auth.js
 import { auth } from "./firebase.js";
-// Real Firebase functions ko import karna zaroori hai
+
 import { signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 
 /**
- * Real Firebase login function
+ *  Firebase login function
  */
 export async function login(email, password) {
   if (!email || !password) {
