@@ -23,7 +23,7 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 // ✅ FIXED: Correct Model Name (gemini-1.5-flash)
 // gemini-2.5-flash abhi exist nahi karta, isliye crash ho raha tha
 const model = genAI.getGenerativeModel({ 
-    model: "gemini-1.5-flash", 
+    model: "gemini-2.5-flash", 
     generationConfig: { responseMimeType: "application/json" }
 });
 
@@ -176,3 +176,4 @@ app.post('/api/evaluate-text', async (req, res) => {
 // ✅ CRITICAL FIX: "require" hata diya kyunki wo ES Module me crash karta hai
 // Vercel ke liye sirf export chahiye
 export default app;
+
