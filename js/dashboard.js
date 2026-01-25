@@ -52,7 +52,7 @@ auth.onAuthStateChanged(async (user) => {
       snapshot.forEach((doc) => {
         const data = doc.data();
 
-        // 🔥 FILTER: Agar ID nahi hai, toh skip karo (Unknown wala issue fix)
+        
         if (!data.studentId || data.studentId === "Unknown") {
             return;
         }
