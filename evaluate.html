@@ -41,11 +41,20 @@
   .charts-container { display: flex; gap: 20px; height: 300px; margin-top: 20px; }
   .chart-box { flex: 1; background: rgba(0,0,0,0.2); border-radius: 15px; padding: 10px; }
 
+  /* Utilities */
+  .teacher-note { margin-top: 25px; padding: 15px; background: rgba(234, 179, 8, 0.1); border-left: 4px solid #eab308; border-radius: 8px; }
+  .btn-group { display: flex; gap: 10px; margin-top: 20px; }
+  #downloadBtn { background: var(--success); display: none; flex: 1; }
+  #printBtn { background: #3b82f6; display: none; flex: 1; }
+
   @media print {
     body { background: white; color: black; }
     .container { box-shadow: none; border: none; padding: 0; }
     button, .upload-section, #statusOverlay, select { display: none !important; }
     .student-card { border: 1px solid #000; color: black; page-break-inside: avoid; }
+    .feedback, .value, h2, h3, h4 { color: black !important; -webkit-text-fill-color: black !important; }
+    .teacher-note { background: #eee; border-left: 4px solid #000; color: black; }
+    #teacherTip { color: black !important; }
   }
   @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
   @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
@@ -88,9 +97,17 @@
         <div class="metric-card"><h3>Class Average</h3><div class="value" id="avgScore">0.0</div></div>
         <div class="metric-card"><h3>Total Students</h3><div class="value" id="totalStudents">0</div></div>
     </div>
+     <div class="charts-container">
+        <div class="chart-box"><canvas id="scoreChart"></canvas></div>
+        <div class="chart-box"><canvas id="pieChart"></canvas></div>
+    </div>
     <div class="teacher-note">
         <strong style="color: #fcd34d;">💡 Note:</strong>
         <p id="teacherTip" style="margin: 5px 0 0 0; color: #fff;"></p>
+    </div>
+    <div style="margin-top: 20px;">
+        <h4 style="color:#f472b6; margin:0 0 10px 0;">⚠️ Common Mistakes:</h4>
+        <ul id="mistakesList" style="color:#cbd5e1;"></ul>
     </div>
   </div>
 
@@ -112,6 +129,8 @@ window.speakText = (text) => {
       window.speechSynthesis.cancel();
       const speech = new SpeechSynthesisUtterance(text);
       window.speechSynthesis.speak(speech);
+  }else {
+      alert("TTS Not Supported");
   }
 };
 
@@ -123,6 +142,9 @@ const resultArea = document.getElementById("resultArea");
 const dashboard = document.getElementById("dashboard");
 const downloadBtn = document.getElementById("downloadBtn");
 const printBtn = document.getElementById("printBtn");
+const strictnessInput = document.getElementById("strictness");
+const qpCount = document.getElementById("qpCount");
+const ansCount = document.getElementById("ansCount");
 
 // ✅ UI FIX: Update File Counts when user selects files
 qpInput.onchange = () => { 
@@ -152,11 +174,57 @@ const preprocessImage = file => new Promise(res => {
   };
 });
 
+const renderCharts = (results) => {
+    let low=0, mid=0, high=0;
+    results.forEach(r => {
+        const s = parseFloat(r.score) || 0;
+        if(s < 5) low++;
+        else if(s < 8) mid++;
+        else high++;
+    });
+
+    const ctxBar = document.getElementById('scoreChart');
+    if(window.myBarChart instanceof Chart) window.myBarChart.destroy();
+    window.myBarChart = new Chart(ctxBar, {
+        type: 'bar',
+        data: {
+            labels: ['Needs Help (<5)', 'Avg (5-7)', 'Top (8+)'],
+            datasets: [{
+                label: 'Students',
+                data: [low, mid, high],
+                backgroundColor: ['#ef4444', '#facc15', '#22c55e'],
+                borderRadius: 8
+            }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: {display:false} } }
+    });
+
+    const ctxPie = document.getElementById('pieChart');
+    if(window.myPieChart instanceof Chart) window.myPieChart.destroy();
+    window.myPieChart = new Chart(ctxPie, {
+        type: 'doughnut',
+        data: {
+            labels: ['Pass', 'Fail'],
+            datasets: [{
+                data: [mid + high, low],
+                backgroundColor: ['#22c55e', '#ef4444'],
+                borderWidth: 0
+            }]
+        },
+        options: { responsive: true, maintainAspectRatio: false }
+    });
+};
+
 processBtn.onclick = async () => {
   if (!auth.currentUser) return alert("Please Login First!");
   if (!qpInput.files.length || !ansInput.files.length) return alert("Upload papers!");
 
+  const strictnessMode = strictnessInput.value;
   processBtn.disabled = true;
+  resultArea.innerHTML = "";
+  dashboard.style.display = "none";
+  downloadBtn.style.display = "none";
+  printBtn.style.display = "none";
   statusOverlay.innerText = "⏳ Initializing Neural Vision...";
 
   try {
@@ -193,6 +261,7 @@ processBtn.onclick = async () => {
     
     if (!evalRes.ok) throw new Error("Grading Failed. Check API Key or Timeout.");
     const evalData = await evalRes.json();
+    const { results, teacherInsights } = evalData;
     
     // Save to Firebase
     for (const r of evalData.results) {
@@ -208,11 +277,14 @@ processBtn.onclick = async () => {
 
     document.getElementById("avgScore").innerText = evalData.teacherInsights.classAverage;
     document.getElementById("totalStudents").innerText = evalData.teacherInsights.totalStudents;
+    document.getElementById("mistakesList").innerHTML = teacherInsights.commonMistakes.map(m => `<li>${m}</li>`).join("");
     document.getElementById("teacherTip").innerText = evalData.teacherInsights.improvementTip;
 
     // Clear previous results
     resultArea.innerHTML = "";
     
+    renderCharts(results);
+
     // Render new results
     evalData.results.forEach(student => {
         resultArea.innerHTML += `
@@ -228,6 +300,19 @@ processBtn.onclick = async () => {
 
     downloadBtn.style.display = "block";
     printBtn.style.display = "block";
+
+     downloadBtn.onclick = () => {
+        let csv = "Roll No,Score,Feedback\n";
+        results.forEach(r => {
+             let cleanF = r.feedback.replace(/(\r\n|\n|\r|,)/gm, " ");
+             let cleanId = r.studentId.split('.')[0];
+             csv += `${cleanId},${r.score},"${cleanF}"\n`
+        });
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = 'Class_Report.csv'; a.click();
+    };
 
   } catch (e) {
     console.error(e);
