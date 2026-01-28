@@ -306,6 +306,7 @@ processBtn.onclick = async () => {
         results.forEach(r => {
              let cleanF = r.feedback.replace(/(\r\n|\n|\r|,)/gm, " ");
              let cleanId = r.studentId.split('.')[0];
+             let cleanScore = `"${r.score}"`;
              csv += `${cleanId},${r.score},"${cleanF}"\n`
         });
         const blob = new Blob([csv], { type: 'text/csv' });
