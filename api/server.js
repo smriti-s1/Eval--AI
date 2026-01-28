@@ -119,28 +119,20 @@ app.post('/api/evaluate-text', async (req, res) => {
 
   for (const s of students) {
     if(!s.answerText || s.answerText.length < 5) continue;
-    // --- DETERMINE MAX MARKS ---
-    let maxMarks = 10; // default
-    if(question.match(/marks\s*[:=]\s*(\d+)/i)){
-        maxMarks = parseInt(RegExp.$1); // extract marks from question text
-    } else if(question.split(/\?/).length > 1){
-        // if multiple questions, default 1 mark each
-        maxMarks = question.split(/\?/).length;
-    }
+    
 
     const prompt = `
       Question: ${question}
       Model Answer: ${modelAnswer}
       Student Answer: ${s.answerText}
-      MAX MARKS: ${maxMarks}
       EVALUATION MODE: ${strictness || "Moderate"}
       
       Instructions:
       - If 'Strict': Deduct marks heavily.
       - If 'Lenient': Ignore minor errors.
       
-      Task: Evaluate out of ${maxMarks}.
-      Return JSON: { "score": "X/${maxMarks}", "feedback": "Short feedback (max 20 words)." }
+      Task: Evaluate out of 10.
+      Return JSON: { "score": "X/10", "feedback": "Short feedback (max 20 words)." }
     `;
     
 
@@ -181,6 +173,7 @@ app.post('/api/evaluate-text', async (req, res) => {
 
 
 export default app;
+
 
 
 
